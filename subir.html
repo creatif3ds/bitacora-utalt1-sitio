@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Subir a la bitácora UTALT1</title>
+<style>
+  :root { --red:#d9232e; --ink:#222; --mut:#555; --bg:#fafafa; --card:#fff; --line:#ddd; --ok:#2a8a3a }
+  @media (prefers-color-scheme: dark) { :root { --ink:#eee; --mut:#aaa; --bg:#161616; --card:#222; --line:#444; --ok:#5fd170 } }
+  * { box-sizing:border-box }
+  body { font:15px/1.4 Arial,sans-serif; color:var(--ink); background:var(--bg); margin:0; padding:16px }
+  main { max-width:760px; margin:0 auto }
+  h1 { margin:0 0 2px; font-size:26px } h1 small { color:var(--red); font-size:12px }
+  h3 { margin:0 0 6px; font-size:16px }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px; margin-top:12px }
+  label { display:block; font-size:12px; color:var(--mut); margin:10px 0 3px }
+  input,select,textarea,button { font:inherit; width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink) }
+  textarea { min-height:100px; resize:vertical } textarea.code { font-family:monospace; font-size:12px; min-height:80px }
+  .row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px } @media (max-width:560px){ .row{grid-template-columns:1fr} }
+  button { width:auto; cursor:pointer; background:var(--red); color:#fff; border:0; padding:9px 16px; font-weight:bold }
+  button.sec { background:transparent; color:var(--ink); border:1px solid var(--line) }
+  .acts { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; align-items:center }
+  .chips span { display:inline-block; padding:2px 10px; border-radius:12px; border:1px solid var(--line); margin:2px 4px 2px 0; font-size:13px }
+  .chips .si { border-color:var(--ok); color:var(--ok) }
+  .foto { display:grid; grid-template-columns:56px 1fr; gap:8px; margin-top:8px } .foto img { width:56px; height:56px; object-fit:cover; border-radius:4px }
+  #msg { margin-top:12px; white-space:pre-wrap; font-size:13px } .err { color:var(--red) } .ok { color:var(--ok) }
+  .mut { color:var(--mut); margin:0 } .hide { display:none }
+  .ocupado button { pointer-events:none; opacity:.55 } .ocupado #msg::after { content:' ⏳' }
+</style>
+</head>
+<body><main>
+<h1>UTALT1 <small>SUBIR A LA BITÁCORA</small></h1>
+<p class="mut">Sube tu parte del día o el código directo a GitHub. Cuando el día está completo, el PDF se arma y se publica solo (1-2 minutos).</p>
+
+<div class="card">
+  <div class="row">
+    <div><label style="margin-top:0">Tu nombre</label><select id="quien"><option>Yerik<option>Ángel<option>Liz<option>Ariel</select></div>
+    <div><label style="margin-top:0">Día</label><input type="date" id="date"></div>
+    <div><label style="margin-top:0">Tu token de GitHub</label><input type="password" id="token" autocomplete="off" placeholder="github_pat_…"></div>
+  </div>
+  <p class="mut" style="margin-top:8px"><small>El token se queda solo en esta pestaña y se borra al cerrarla. Se pide una vez por sesión.</small></p>
+  <div class="chips" id="chips" style="margin-top:8px"></div>
+  <div class="acts"><button type="button" class="sec" id="estado">Ver quién ya subió</button></div>
+</div>
+
+<div class="card">
+  <h3>Mi parte del día</h3>
+  <form id="f">
+    <div class="row">
+      <div><label>Robot</label><select name="robot"><option>Ambos robots<option>Robot chico<option>Robot grande</select></div>
+      <div><label>Sección</label><select name="section"><option>Mecánico<option>Diseño<option>Programación</select></div>
+      <div><label>Título</label><input name="title" required placeholder="Ej. Intake con rodillos"></div>
+    </div>
+    <label>Actividades de tu parte (una línea por párrafo)</label><textarea name="text" required placeholder="Hoy armamos..."></textarea>
+    <label>Fotos (con pie de foto opcional)</label>
+    <input type="file" id="fotos" accept="image/*" multiple><div id="prev"></div>
+    <div class="acts"><button>Subir mi parte del día</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Código del día</h3>
+  <p class="mut">Se compara con el código anterior al armar el PDF. Lo que no subas se conserva como estaba.</p>
+  <form id="fc">
+    <div class="row">
+      <div><label>Robot</label><select name="robot"><option value="chico">Código chico<option value="grande">Código grande</select></div>
+      <div><label>Carpeta del proyecto</label><input type="file" id="carpeta" webkitdirectory></div>
+      <div><label>o archivos sueltos</label><input type="file" id="archivos" multiple accept=".cpp,.h,.hpp,.c,.py,.ino,.java,.txt"></div>
+    </div>
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="base" value="1" style="width:auto"> Este es el código base (la raíz)</label>
+    <div class="acts"><button>Subir código</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Cerrar el día</h3>
+  <p class="mut">Si alguien no va a subir su parte, cierra el día con lo que ya llegó para que salga en el PDF.</p>
+  <div class="acts"><button type="button" class="sec" id="cerrar">Cerrar el día con lo enviado</button></div>
+</div>
+<div id="msg"></div>
+</main>
+<script>
+const OWNER = 'creatif3ds', REPO = 'bitacora-utalt1', BRANCH = 'main';
+const PERSONAS = ['Yerik', 'Ángel', 'Liz', 'Ariel'], SECCIONES = ['Diseño', 'Mecánico', 'Programación'];
+const EXT = /\.(cpp|h|hpp|c|py|ino|java|txt)$/i, IGNORAR = /(^|\/)(\.[^/]+|build|node_modules)(\/|$)/;
+const $ = s => document.querySelector(s), msg = $('#msg');
+const say = (t, c) => { msg.textContent = t; msg.className = c || ''; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const tok = { get: () => { try { return sessionStorage.getItem('tok') || ''; } catch { return ''; } }, set: v => { try { sessionStorage.setItem('tok', v); } catch {} } };
+$('#date').value = new Date().toLocaleDateString('en-CA');
+$('#token').value = tok.get();
+$('#token').onchange = e => tok.set(e.target.value.trim());
+
+async function gh(ruta, opts = {}) {
+  const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/${ruta}`, {
+    ...opts, headers: { Authorization: `Bearer ${tok.get()}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: opts.body && JSON.stringify(opts.body) });
+  if (r.status === 401) throw new Error('El token no es válido o venció.');
+  if (r.status === 403 || r.status === 404) throw new Error('El token no tiene acceso de escritura a ' + REPO + '.');
+  if (!r.ok) throw new Error('GitHub respondió ' + r.status + ': ' + (await r.text()).slice(0, 160));
+  return r.json();
+}
+let ocupadas = 0;
+async function trabajar(fn) {
+  if (!tok.get()) { say('Pega tu token de GitHub arriba.', 'err'); return; }
+  ocupadas++; document.body.classList.add('ocupado');
+  try { return await fn(); }
+  catch (e) { say(e.message === 'Failed to fetch' ? 'Sin conexión con GitHub.' : e.message, 'err'); }
+  finally { if (!--ocupadas) document.body.classList.remove('ocupado'); }
+}
+const b64 = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(s); };
+const fecha = () => $('#date').value;
+
+// Un solo commit con todos los cambios (Git Data API). Reintenta si alguien más subió justo antes.
+// cambios: { ruta: {texto} | {base64} | null (borrar) }
+async function commitear(cambios, mensaje) {
+  for (let intento = 0; intento < 3; intento++) {
+    const ref = await gh(`git/ref/heads/${BRANCH}`), base = await gh(`git/commits/${ref.object.sha}`);
+    const arbol = [];
+    for (const [ruta, c] of Object.entries(cambios)) {
+      if (c === null) { arbol.push({ path: ruta, mode: '100644', type: 'blob', sha: null }); continue; }
+      const blob = await gh('git/blobs', { method: 'POST', body: c.base64 ? { content: c.base64, encoding: 'base64' } : { content: c.texto, encoding: 'utf-8' } });
+      arbol.push({ path: ruta, mode: '100644', type: 'blob', sha: blob.sha });
+    }
+    const t = await gh('git/trees', { method: 'POST', body: { base_tree: base.tree.sha, tree: arbol } });
+    const nuevo = await gh('git/commits', { method: 'POST', body: { message: mensaje, tree: t.sha, parents: [ref.object.sha] } });
+    try { await gh(`git/refs/heads/${BRANCH}`, { method: 'PATCH', body: { sha: nuevo.sha } }); return nuevo.sha.slice(0, 7); }
+    catch (e) { if (!/422/.test(e.message)) throw e; }
+  }
+  throw new Error('Otra persona subió al mismo tiempo; intenta de nuevo.');
+}
+async function archivosEn(prefijo) {
+  const ref = await gh(`git/ref/heads/${BRANCH}`), c = await gh(`git/commits/${ref.object.sha}`);
+  const t = await gh(`git/trees/${c.tree.sha}?recursive=1`);
+  return t.tree.filter(e => e.type === 'blob' && e.path.startsWith(prefijo)).map(e => e.path);
+}
+const mensaje = (titulo, lineas) => `${titulo}\n\nCambios:\n${lineas.map(l => '- ' + l).join('\n')}`;
+
+// Reduce la foto a 1600 px, corrige la rotación del celular y la guarda como JPEG (igual que la app local).
+async function foto(file) {
+  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+  return b64(new Uint8Array(await blob.arrayBuffer()));
+}
+
+$('#fotos').onchange = e => {
+  $('#prev').innerHTML = '';
+  [...e.target.files].forEach(f => { const d = document.createElement('div'); d.className = 'foto';
+    d.innerHTML = `<img src="${URL.createObjectURL(f)}"><input class="pie" placeholder="Pie de foto: ${esc(f.name)}">`; $('#prev').append(d); });
+};
+
+$('#estado').onclick = () => trabajar(async () => {
+  const d = fecha(), rutas = await archivosEn('days/' + d + '/'), cod = await archivosEn('code/');
+  const hechos = PERSONAS.filter(p => rutas.includes(`days/${d}/${p}/part.json`));
+  const codigo = ['chico', 'grande'].filter(r => cod.some(p => p.startsWith(`code/${r}/${d}/`)));
+  $('#chips').innerHTML = PERSONAS.map(p => `<span class="${hechos.includes(p) ? 'si' : ''}">${hechos.includes(p) ? '✔' : '○'} ${p}</span>`).join('') +
+    ['chico', 'grande'].map(r => `<span class="${codigo.includes(r) ? 'si' : ''}">${codigo.includes(r) ? '✔' : '○'} Código ${r}</span>`).join('');
+  const faltan = PERSONAS.filter(p => !hechos.includes(p));
+  say(rutas.includes(`days/${d}/day.json`) ? 'Día cerrado a mano.' : faltan.length ? 'Faltan: ' + faltan.join(', ') + '.' : 'Día completo.', 'ok');
+});
+
+$('#f').onsubmit = e => { e.preventDefault(); trabajar(async () => {
+  const f = new FormData(e.target), persona = $('#quien').value, d = fecha(), base = `days/${d}/${persona}/`;
+  const titulo = f.get('title').trim(), pies = [...document.querySelectorAll('.pie')].map(i => i.value.trim());
+  const files = [...$('#fotos').files], cambios = {}, fotos = [];
+  say('Procesando fotos…');
+  for (const [i, file] of files.entries()) {
+    const n = `foto${i + 1}.jpg`; cambios[base + n] = { base64: await foto(file) };
+    fotos.push({ file: n, path: base + n, caption: pies[i] || titulo });
+  }
+  cambios[base + 'part.json'] = { texto: JSON.stringify({ persona, date: d, title: titulo, text: f.get('text').trim(), photos: fotos, robot: f.get('robot'), section: f.get('section') }, null, 2) };
+  for (const viejo of await archivosEn(base)) if (!(viejo in cambios)) cambios[viejo] = null; // tu parte anterior se reemplaza completa
+  say('Subiendo a GitHub…');
+  const sha = await commitear(cambios, mensaje(`Bitácora ${d} · ${persona}: ${titulo}`,
+    [`${base}part.json: guardado`,...(fotos.length ? [`${fotos.length} foto(s): ${fotos.map(x => x.file).join(', ')}`] : [])]));
+  say(`Listo (commit ${sha}). Si ya están las 4 partes, el PDF se publica en 1-2 minutos.`, 'ok');
+  e.target.reset(); $('#prev').innerHTML = '';
+}); };
+
+$('#fc').onsubmit = e => { e.preventDefault(); trabajar(async () => {
+  const f = new FormData(e.target), robot = f.get('robot'), carpeta = f.get('base') ? 'base' : fecha();
+  const entradas = [...$('#carpeta').files].map(x => [x.webkitRelativePath.split('/').slice(1).join('/'), x]).concat([...$('#archivos').files].map(x => [x.name, x]));
+  const cambios = {}; let omitidos = 0;
+  for (const [nombre, file] of entradas) {
+    if (!EXT.test(nombre) || IGNORAR.test(nombre) || file.size > 300000) { omitidos++; continue; }
+    cambios[`code/${robot}/${carpeta}/${nombre}`] = { texto: (await file.text()).replace(/\r\n/g, '\n') };
+  }
+  const n = Object.keys(cambios).length;
+  if (!n) { say('No hay código válido (.cpp, .h, .py…) en lo que elegiste.', 'err'); return; }
+  if (n > 200) { say('Más de 200 archivos: elige una carpeta más específica.', 'err'); return; }
+  say('Subiendo a GitHub…');
+  const quien = carpeta === 'base' ? `Código base del robot ${robot}` : `Código ${robot}`;
+  const sha = await commitear(cambios, mensaje(`Bitácora ${fecha()} · ${quien}`, [`código (${n} archivo(s)): ${Object.keys(cambios).map(r => r.split('/').slice(3).join('/')).join(', ')}`]));
+  say(`Código subido (commit ${sha}); ${omitidos} archivo(s) omitidos por tipo o tamaño.`, 'ok'); e.target.reset();
+}); };
+
+$('#cerrar').onclick = () => { if (!confirm('Se cerrará el día con las partes que ya llegaron.')) return; trabajar(async () => {
+  const d = fecha();
+  if (!(await archivosEn(`days/${d}/`)).some(p => p.endsWith('/part.json'))) { say('Ese día no tiene partes.', 'err'); return; }
+  const sha = await commitear({ [`days/${d}/day.json`]: { texto: '{"cerrado": true}' } }, mensaje(`Bitácora ${d} · Día cerrado con las partes enviadas`, [`days/${d}/day.json: agregado`]));
+  say(`Día cerrado (commit ${sha}).`, 'ok');
+}); };
+</script>
+</body>
+</html>
