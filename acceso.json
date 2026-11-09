@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "iter": 600000,
+  "usuarios": {
+    "yerik": {
+      "nombre": "Yerik",
+      "salt": "d3LfyZ7U5FBSDv6LehKBSg==",
+      "iv": "TqyAEEkntnHc9khJ",
+      "ct": "5cgoO7yYAGwvIRXqL+s3X5mvJNTLZIWU6dMxKAdEsRZQpUg1b7z2yeRp251qxoOQHL2H6IMjhBgJx6ixvKL0yJC2RDhhu89LxMZcK1YygaxNK4BSbO3eHt5LWVqfTUZobNghVaAAerU5/E1BOw=="
+    },
+    "angel": {
+      "nombre": "\u00c1ngel",
+      "salt": "Oh3I3y9kQBtybSTyl9fY9g==",
+      "iv": "kMndcIvbUXUQ9jFx",
+      "ct": "hFggw776MBxDlf0qSvMEj7kW2OBAPPTl1c+n9wRpsF2bUS0ttU5QC8qo4lx+HbX0+hWeDUBJtCz1EFKCsEfZ1rQdQ4j7V6bppG0Z+eUfIn4rmBC2Ehpqf5Ti7ZfxFsMcJvWCfDUXASjTKz/fFw=="
+    },
+    "liz": {
+      "nombre": "Liz",
+      "salt": "fAoMKV4ou/m7nfaf2UbZDQ==",
+      "iv": "FA35wOjG9tWmU3Wd",
+      "ct": "JSAmGsaeDc6dY5AoDDcg8orYRer66i3s9LY7E8/mAGqYxGpa+XzdgpAVxuIj0/CA5bRhaEvQkvMUpkWTNa5R9Kpdy9NMtAfvXZc5XVbBaCtPopyb/135yGV3eMMz2XZC8/TBXT5I3FLEO/c93A=="
+    },
+    "ariel": {
+      "nombre": "Ariel",
+      "salt": "e+tqpfNlxcuhWWqNUCEZag==",
+      "iv": "4LUsVijQ3c4a1QLm",
+      "ct": "lUlYXKr+Aa/PeL7o7418YtcBMWtDfF6+HHNBNS2Zwq5Aqp9zmRZxKOap3+IsrKSRF8+XSnMRqicREel1io8SIt1u28OPhByF7E2B2Oe3Pm+8BWNPIMGVXhvB33i1wIUEfQ2r69I453hqHvchcQ=="
+    }
+  }
+}
