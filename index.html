@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Bitácora UTALT1</title>
+<style>
+  :root { --bg:#fafafa; --ink:#222; --mut:#555; --red:#d9232e; --line:#ddd; --card:#fff }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161616; --ink:#eee; --mut:#aaa; --line:#444; --card:#222 } }
+  * { box-sizing:border-box }
+  body { font:16px/1.5 Arial,sans-serif; background:var(--bg); color:var(--ink); margin:0; padding:16px }
+  main { max-width:820px; margin:0 auto }
+  h1 small { color:var(--red); font-size:13px }
+  form { max-width:340px; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px }
+  label { display:block; font-size:13px; color:var(--mut); margin:10px 0 3px }
+  input { width:100%; padding:9px; font:inherit; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink) }
+  button, a.btn { display:inline-block; margin-top:14px; background:var(--red); color:#fff; border:0; padding:10px 18px; border-radius:6px; font:inherit; font-weight:bold; cursor:pointer; text-decoration:none }
+  #err { color:var(--red); margin-top:10px; min-height:1.4em } .mut { color:var(--mut) }
+  iframe { width:100%; height:80vh; border:1px solid var(--line); border-radius:6px; margin-top:16px }
+  .hide { display:none }
+</style>
+</head>
+<body><main>
+<h1>UTALT1 <small>BITÁCORA · OVERRIDE 2026-2027</small></h1>
+<form id="f">
+  <p class="mut" style="margin:0">Acceso solo para el equipo.</p>
+  <label for="u">Usuario</label><input id="u" autocomplete="username" required>
+  <label for="p">Contraseña</label><input id="p" type="password" autocomplete="current-password" required>
+  <button id="go">Entrar</button>
+  <div id="err" role="alert"></div>
+</form>
+<div id="visor" class="hide">
+  <a class="btn" id="descarga" download="Bitacora_UTALT1_Override.pdf" style="margin-top:0">Descargar PDF</a>
+  <iframe id="pdf" title="Bitácora en PDF"></iframe>
+</div>
+</main>
+<script>
+// El PDF está cifrado (AES-256-GCM, llave PBKDF2 de usuario+contraseña); el navegador lo descifra aquí.
+const ITER = 600000, $ = s => document.querySelector(s);
+$('#f').onsubmit = async e => {
+  e.preventDefault(); $('#err').textContent = ''; $('#go').disabled = true; $('#go').textContent = 'Verificando…';
+  try {
+    const r = await fetch('bitacora.enc', { cache: 'no-store' });
+    if (!r.ok) throw new Error('nofile');
+    const b = new Uint8Array(await r.arrayBuffer());
+    const enc = new TextEncoder();
+    const base = await crypto.subtle.importKey('raw', enc.encode($('#u').value.trim().toLowerCase() + '\0' + $('#p').value), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b.slice(0, 16), iterations: ITER, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const pdf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(16, 28) }, key, b.slice(28));
+    const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
+    $('#pdf').src = url; $('#descarga').href = url;
+    $('#f').classList.add('hide'); $('#visor').classList.remove('hide');
+  } catch (x) {
+    $('#err').textContent = x.message === 'nofile' ? 'La bitácora aún no está publicada.' : 'Usuario o contraseña incorrectos.';
+  }
+  $('#go').disabled = false; $('#go').textContent = 'Entrar';
+};
+</script>
+</body>
+</html>
